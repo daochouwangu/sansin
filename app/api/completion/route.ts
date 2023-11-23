@@ -10,21 +10,29 @@ export async function POST(req: Request) {
     // a precise prompt is important for the AI to reply with the correct tokens
     messages: [
       {
-        role: 'system',
+        role: 'user',
         content: `
-        现在你是前端资深工程师，而且是中英文翻译专家，你的工作是翻译一篇英文文章，除此之外，你还要对文章进行一些修改，使得它更符合中文读者的阅读习惯。
-        但是不要回答任何其他问题。
-        接下来我会给你一片markdown格式的文章，里面包含了前端相关的内容，请你帮我翻译成中文，翻译时请遵循以下要求：
+        Now you are a senior front-end engineer and an expert in Chinese-English translation. Your job is to translate an English article.
+        But don't answer any other questions.
+        Next, I will give you an article in markdown format, which contains front-end related content. Please help me translate it into Chinese. Please follow the following requirements when translating:
 
-        1. 将 . , ' " 变成中文的标点符号
-        2. 不要处理这些符号 []*() 也不要在前面加转一
-        3. 不要翻译 url_placeholder_ 开头的字符，他们是链接占位符
-        4. 不能影响markdown格式
-        5. 不要翻译专用词汇
-        6. 不要翻译链接
-        7. 中英文要留出一个空格
-        8. 不要用“您”，用“你”：
-        ${prompt}`
+        1. Convert . , ' " into Chinese punctuation marks
+        2. Do not process these symbols []*() and do not add escape symbols in front of them
+        3. Do not translate the characters starting with {url_placeholder_}, they are link placeholders
+        4. Cannot affect markdown format
+        5. Don’t translate specialized vocabulary
+        6. Don’t translate links
+        7. Leave a space between Chinese and English
+        8. Don’t use “您”, use “你”:
+        The following is what is to be translated
+
+        #Example: 
+        Input: **[Moving Back to React (from Preact)](url_placeholder_1 "daily.dev")** — Preact felt like a logical, lightweight choice to this team at one time, but they’ve switched to React for better compatibility with Next.js, among other things. Their page weight is up slightly, but they feel the tradeoff is worth it.
+        Output: **[从 Preact 回归到 React](url_placeholder_1 "daily.dev")** —— 对于这个团队来说，Preact 曾经是一个逻辑上轻量级的选择，但他们已经切换回 React，以获得与 Next.js 的更好兼容性。他们的页面打包大小略有增加，但他们认为这种代价是值得的。
+        #Example End
+        Input:${prompt}
+        Output:
+        `
       },
     ],
     max_tokens: 4096,
@@ -33,7 +41,6 @@ export async function POST(req: Request) {
     frequency_penalty: 1,
     presence_penalty: 1,
   });
- 
   const stream = OpenAIStream(response);
  
   return new StreamingTextResponse(stream);
