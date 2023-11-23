@@ -2,26 +2,43 @@ import Markdown from "react-markdown";
 import { EditorMode } from "../atoms/mode";
 import remarkGfm from 'remark-gfm'
 import { useWindowScroll } from "@uidotdev/usehooks";
+import { DiffEditor, type MonacoDiffEditor, type Monaco } from '@monaco-editor/react';
+import { EditorBar } from "./EditorBar";
+import { useRef } from "react";
+import { useAtom } from "jotai";
+import { sourceAtom, targetAtom } from "../atoms/text";
 
-export interface EditorProps {
-  mode: EditorMode;
-  markdown: string;
-  setMarkdown: (e: any) => void;
-}
-export const Editor:React.FC<EditorProps> = ({ mode, markdown, setMarkdown }) => {
-  const [{ x, y }, scrollTo] = useWindowScroll();
-  const renderMarkdown = (markdown: string) => {
-    return <Markdown className="h-full overflow-scroll" remarkPlugins={[remarkGfm]}>
-      { markdown }
-    </Markdown>
+export const Editor:React.FC = () => {
+  const [source, setSource] = useAtom(sourceAtom);
+  const [target, setTarget] = useAtom(targetAtom);
+  const diffEditorRef = useRef<MonacoDiffEditor | null>(null);
+
+  function handleEditorDidMount(editor: MonacoDiffEditor, monaco: Monaco) {
+    diffEditorRef.current = editor;
   }
-  const onInput = (e: any) => {
-    setMarkdown(e.target.value)
+
+  function showOriginalValue() {
+    alert(diffEditorRef.current?.getOriginalEditor().getValue());
   }
-  const renderEditor = (markdown: string) => {
-    return <textarea className="p-2 resize w-full h-full " value={markdown} onInput={onInput}/>
+
+  function showModifiedValue() {
+    alert(diffEditorRef.current?.getModifiedEditor().getValue());
   }
+  console.log(target)
   return (
-    mode === EditorMode.PREVIEW ? renderMarkdown(markdown) : renderEditor(markdown)
+    <div className="w-full">
+      <EditorBar />
+      <DiffEditor 
+        height="90vh"
+        language="markdown"
+        options={{
+          originalEditable: true,
+          wordWrap: "on",
+        }}
+        original={source}
+        modified={target}
+        onMount={handleEditorDidMount}
+      />
+    </div>
   )
 }

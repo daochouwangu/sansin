@@ -24,7 +24,6 @@ function backLink(md: string) {
 type TranslateFunction = (text: string) => Promise<string | null | undefined>;
 function splitDocs(md: string ) {
   const docs = [] as string[];
-  let translatedMdWithPlaceholders = '';
 
   // Split the text into lines
   const lines = md.split('\n');
@@ -52,40 +51,29 @@ export const TranslateButton = () => {
   const [target, setTarget] = useAtom(targetAtom)
   const [show, setShow] = useState(false)
   const [docs, setDocs] = useState([] as string[])
-  const [translatedDoc, setTranslatedDoc] = useState('')
-  const [index, setIndex] = useState(0)
   const {
     complete,
-    completion
   } = useCompletion()
   useEffect(() => {
       const docs = splitDocs(source)
       setDocs(docs)
   }, [source])
-  console.log(docs)
-  useEffect(() => {
-    setTarget(translatedDoc + completion)
-  }, [completion, translatedDoc])
   const translate = async (i: number) => {
     setShow(true)
     if (i === 0) {
       setTarget('')
-      setTranslatedDoc('')
+      setTarget('')
     }
     if (i >= docs.length) {
       setShow(false)
       return
     }
-    setIndex(i)
-    console.log(i, docs[i])
-      // const doc = hideLink(docs[i]);
-    const r = await complete(docs[i])
-    setTranslatedDoc((v) => v + r)
-    translate(i + 1)
-      // if (translate) {
-      //   const tdoc = backLink(translate)
-      //   translatedDocs.push(translate)
-      // }
+    const doc = hideLink(docs[i]);
+    const r = await complete(doc)
+    if (r) {
+      setTarget((v) => v + backLink(r))
+      translate(i + 1)
+    }
   }
   return (
     <>

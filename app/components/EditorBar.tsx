@@ -1,9 +1,9 @@
-import { EditorProps } from "./Editor"
+import { TranslateButton } from "./bar/TranslateButton"
 
 export const EditorBar = () => {
   return (
     <div className="flex">
-      <button>copy</button>
+      <TranslateButton />
     </div>
   )
 }
