@@ -74,6 +74,8 @@ export const Editor:React.FC = () => {
           wordWrap: "on",
         }}
         onMount={handleEditorDidMount}
+        original={source}
+        modified={target}
       />
     </div>
   )
