@@ -1,6 +1,7 @@
 import { atom } from "jotai"
 
 const a = `
+
 ## 🔥 本周热门
 
 **[Building Fast Next.js Apps using TypeScript and AWS Amplify JavaScript V6](https://aws.amazon.com/blogs/mobile/amplify-javascript-v6/ "aws.amazon.com")** —— If you’ve been wondering if you can deploy modern Next.js apps anywhere other than Vercel, AWS Amplify is keen to enter the chat. _Amplify_ is essentially a packaging up of AWS services into a platform upon which you can deploy full-stack apps and its newest JavaScript SDK offers substantial improvements, including Next.js 14 support (including App Router and Server Actions) via what they refer to as a 'Next.js adapter'.

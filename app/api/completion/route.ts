@@ -2,6 +2,13 @@ import { OpenAIStream, StreamingTextResponse } from "ai";
 import openai from "../model";
 
 export async function POST(req: Request) {
+  if (!req.headers.has('Authorization')) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+  const code = req.headers.get('Authorization');
+  if (code !== 'docschina777') {
+    return new Response('Unauthorized', { status: 401 });
+  }
   const { prompt } = await req.json();
   // Request the OpenAI API for the response based on the prompt
   const response = await openai.chat.completions.create({

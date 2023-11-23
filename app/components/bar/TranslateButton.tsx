@@ -1,8 +1,11 @@
+'use client'
 import { useCompletion } from "ai/react";
 import { sourceAtom, targetAtom } from "../../atoms/text";
 import { useAtom } from "jotai";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { Dialog } from "@headlessui/react";
+import useLocalStorage from "./useLocalStorage";
+import { useIsClient } from "@uidotdev/usehooks";
 const urls = [] as string[];
 let index = 0
 function hideLink(md: string) {
@@ -47,17 +50,56 @@ function splitDocs(md: string ) {
 
 
 export const TranslateButton = () => {
-  const [source] = useAtom(sourceAtom)
+  const [source, setSource] = useAtom(sourceAtom)
   const [target, setTarget] = useAtom(targetAtom)
   const [show, setShow] = useState(false)
   const [docs, setDocs] = useState([] as string[])
+  const [showAuth, setShowAuth] = useState(false)
+  const [error, setError] = useState('')
+  const [code, setCode] = useLocalStorage('code', '')
+
   const {
     complete,
-  } = useCompletion()
+  } = useCompletion({
+    headers: {
+      'Authorization': code
+    },
+    onResponse: res => {
+      // trigger something when the response starts streaming in
+      // e.g. if the user is rate limited, you can show a toast
+      if (res.status === 429) {
+        console.log('You are being rate limited. Please try again later.');
+      }
+      if (res.status === 401) {
+        setShowAuth(true)
+      }
+    }
+  })
   useEffect(() => {
       const docs = splitDocs(source)
       setDocs(docs)
   }, [source])
+  
+  const checkAuth = () => {
+    if (!code) {
+      setShowAuth(true)
+      return
+    }
+    fetch('/api/auth', {
+      headers: {
+        'Authorization': code
+      },
+      method: 'GET',
+    }).then((res) => res.json()).then(async (res) => {
+      if (res.ok) {
+        setError('')
+        setShowAuth(false)
+      } else {
+        setError('密码错误')
+        setShowAuth(true)
+      }
+    })
+  }
   const translate = async (i: number) => {
     setShow(true)
     if (i === 0) {
@@ -75,18 +117,51 @@ export const TranslateButton = () => {
       translate(i + 1)
     }
   }
+  const onChangeCode = (e: any) => {
+    setCode(e.target.value)
+  }
   return (
     <>
     <button className="bg-blue-500 text-white text-bold p-2 rounded" onClick={() => translate(0)}>译</button>
     {show &&<Dialog
-          static
-          open={show}
-          onClose={() => setShow(false)}
-        >
-          <Dialog.Panel>
-            <Dialog.Title>翻译中...</Dialog.Title>
-          </Dialog.Panel>
-        </Dialog>
+      open={show}
+      onClose={() => setShow(false)}
+      className="relative z-50"
+    >
+      {/* The backdrop, rendered as a fixed sibling to the panel container */}
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+      {/* Full-screen container to center the panel */}
+      <div className="fixed inset-0 flex w-screen items-center justify-center ">
+        {/* The actual dialog panel  */}
+        <Dialog.Panel className="mx-auto max-w-sm rounded bg-white p-4">
+          <Dialog.Title>翻译中...</Dialog.Title>
+          {/* ... */}
+        </Dialog.Panel>
+      </div>
+    </Dialog>
+    }
+    {showAuth &&<Dialog
+      open={showAuth}
+      onClose={() => setShowAuth(false)}
+      className="relative z-50"
+    >
+      {/* The backdrop, rendered as a fixed sibling to the panel container */}
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+      {/* Full-screen container to center the panel */}
+      <div className="fixed inset-0 flex w-screen items-center justify-center ">
+        {/* The actual dialog panel  */}
+        <Dialog.Panel className="mx-auto max-w-sm rounded bg-white p-4 flex flex-col">
+          请输入密码
+          <input value={code} onChange={onChangeCode}></input>
+          <button onClick={checkAuth}>确认</button>
+          {
+            error && <div className="text-red-500">{error}</div>
+          }
+        </Dialog.Panel>
+      </div>
+    </Dialog>
     }
     </>
   )

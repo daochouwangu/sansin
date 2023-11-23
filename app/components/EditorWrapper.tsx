@@ -1,3 +1,4 @@
+'use client'
 import { useAtom } from "jotai"
 import { blocksAtom } from "../atoms/blocks"
 import { Editor } from "./Editor"
