@@ -68,9 +68,11 @@ export const TranslateButton = () => {
       // trigger something when the response starts streaming in
       // e.g. if the user is rate limited, you can show a toast
       if (res.status === 429) {
-        console.log('You are being rate limited. Please try again later.');
+        setError('您的账号已达上限，请更换 token')
+        setShowAuth(true)
       }
       if (res.status === 401) {
+        setError('密码错误')
         setShowAuth(true)
       }
     }
@@ -85,20 +87,8 @@ export const TranslateButton = () => {
       setShowAuth(true)
       return
     }
-    fetch('/api/auth', {
-      headers: {
-        'Authorization': code
-      },
-      method: 'GET',
-    }).then((res) => res.json()).then(async (res) => {
-      if (res.ok) {
-        setError('')
-        setShowAuth(false)
-      } else {
-        setError('密码错误')
-        setShowAuth(true)
-      }
-    })
+    setShowAuth(false)
+    translate(0)
   }
   const translate = async (i: number) => {
     setShow(true)
@@ -152,13 +142,15 @@ export const TranslateButton = () => {
       {/* Full-screen container to center the panel */}
       <div className="fixed inset-0 flex w-screen items-center justify-center ">
         {/* The actual dialog panel  */}
-        <Dialog.Panel className="mx-auto max-w-sm rounded bg-white p-4 flex flex-col">
-          请输入密码
-          <input value={code} onChange={onChangeCode}></input>
-          <button onClick={checkAuth}>确认</button>
-          {
-            error && <div className="text-red-500">{error}</div>
-          }
+        <Dialog.Panel className="flex flex-col mx-auto max-w-sm rounded bg-white p-4">
+          <div className="w-full">请输入密码/或者您自己的 openai token（sk-开头）</div>
+          <div className="w-full flex flex-row flex-nowrap">
+            <input className="border border-black flex-1" value={code} onChange={onChangeCode}></input>
+            <button onClick={checkAuth} className="w-16 bg-blue-500 text-white">确认</button>
+          </div>
+          <div>
+            {error && <div className="text-red-500">{error}</div>}
+          </div>
         </Dialog.Panel>
       </div>
     </Dialog>
