@@ -12,6 +12,7 @@
     "@headlessui/react": "^1.7.17",
     "@monaco-editor/react": "^4.6.0",
     "@uidotdev/usehooks": "^2.4.1",
+    "@vercel/analytics": "^1.1.1",
     "ai": "^2.2.24",
     "jotai": "^2.5.1",
     "next": "14.0.3",
