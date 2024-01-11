@@ -7,28 +7,24 @@ export async function POST(req: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
   const code = req.headers.get('Authorization');
-  let openai = null
   if (!code) {
     return new Response('Unauthorized', { status: 401 });
   }
-  if (code === 'docschina777') {
-    openai = new OpenAI({
-      organization: "org-W8xIMQfeLUS1B1uTQgtt6EQM",
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.BASE_URL,
-    });
-  } else {
-    console.log('code', code)
-    openai = new OpenAI({
-      apiKey: code,
-      baseURL: process.env.BASE_URL,
-    });
-  }
+  const openai = new OpenAI({
+    organization: "org-W8xIMQfeLUS1B1uTQgtt6EQM",
+    apiKey: code,
+    baseURL: process.env.BASE_URL,
+  });
   const { prompt } = await req.json();
   try {
+    const length = prompt.length;
+    if (length > 16000) {
+      return new Response('Prompt too long', { status: 400 });
+    }
+    const maxTokens = 16000 - length - 1000;
     // Request the OpenAI API for the response based on the prompt
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo-1106',
+      model: 'gpt-3.5-turbo-16k',
       stream: true,
       // a precise prompt is important for the AI to reply with the correct tokens
       messages: [
@@ -49,20 +45,21 @@ export async function POST(req: Request) {
           The following is what is to be translated
 
           #Example: 
-          Input: **[Moving Back to React (from Preact)](url_placeholder_1 "daily.dev")** — Preact felt like a logical, lightweight choice to this team at one time, but they’ve switched to React for better compatibility with Next.js, among other things. Their page weight is up slightly, but they feel the tradeoff is worth it.
-          Output: **[从 Preact 回归到 React](url_placeholder_1 "daily.dev")** —— 对于这个团队来说，Preact 曾经是一个逻辑上轻量级的选择，但他们已经切换回 React，以获得与 Next.js 的更好兼容性。他们的页面打包大小略有增加，但他们认为这种代价是值得的。
+          Input: **[Moving Back to React (from Preact)](url_placeholder_1 "daily.dev")** — Preact felt like a logical, lightweight choice to this team at one time, but they’ve switched to React for better compatibility with Next.js, among other things.
+          Output: **[从 Preact 回归到 React](url_placeholder_1 "daily.dev")** —— 对于这个团队来说，Preact 曾经是一个逻辑上轻量级的选择，但他们已经切换回 React，以获得与 Next.js 的更好兼容性。
           #Example End
           Input:${prompt}
           Output:
           `
         },
       ],
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       temperature: 0, // you want absolute certainty for spell check
       top_p: 1,
       frequency_penalty: 1,
       presence_penalty: 1,
     });
+    console.log(response)
     const stream = OpenAIStream(response);
     return new StreamingTextResponse(stream);
   } catch (error) {
