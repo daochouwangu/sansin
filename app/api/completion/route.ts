@@ -44,9 +44,8 @@ export async function POST(req: Request) {
           3. Do not translate the characters starting with {url_placeholder_}, they are link placeholders
           4. Cannot affect markdown format
           5. Don’t translate specialized vocabulary
-          6. Don’t translate links
-          7. Leave a space between Chinese and English
-          8. Don’t use “您”, use “你”:
+          6. Leave a space between Chinese and English
+          7. Don’t use “您”, use “你”:
           The following is what is to be translated
 
           #Example: 
