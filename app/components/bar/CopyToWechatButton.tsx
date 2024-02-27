@@ -116,7 +116,7 @@ export const CopyToWechatButton = () => {
     // Write the ClipboardItem to the clipboard
     try {
       await navigator.clipboard.write([item]);
-      console.log("HTML copied to clipboard");
+      alert("已复制到剪贴板");
     } catch (err) {
       console.error("Failed to copy HTML: ", err);
     }
