@@ -1,6 +1,6 @@
 "use client";
 import { useCompletion } from "ai/react";
-import { sourceAtom, targetAtom } from "../../atoms/text";
+import { editorAtom } from "../../atoms/text";
 import { useAtom } from "jotai";
 import { use, useEffect, useRef, useState } from "react";
 import { Dialog } from "@headlessui/react";
@@ -35,6 +35,7 @@ function splitDocs(md: string) {
   const lines = md.split("\n");
 
   let chunk = "";
+
   for (let i = 0; i < lines.length; i++) {
     // If adding the next line does not exceed the limit, add it to the chunk
     if (chunk.length + lines[i].length <= 2000) {
@@ -52,10 +53,8 @@ function splitDocs(md: string) {
 }
 
 export const TranslateButton = () => {
-  const [source, setSource] = useAtom(sourceAtom);
-  const [target, setTarget] = useAtom(targetAtom);
+  const [editor] = useAtom(editorAtom);
   const [show, setShow] = useState(false);
-  const [docs, setDocs] = useState([] as string[]);
   const [showAuth, setShowAuth] = useState(false);
   const [error, setError] = useState("");
   const [code, setCode] = useLocalStorage("code", "");
@@ -77,10 +76,10 @@ export const TranslateButton = () => {
       }
     },
   });
-  useEffect(() => {
-    const docs = splitDocs(source);
-    setDocs(docs);
-  }, [source]);
+  // useEffect(() => {
+  //   const docs = splitDocs(source);
+  //   setDocs(docs);
+  // }, [source]);
 
   const checkAuth = () => {
     if (!code) {
@@ -90,12 +89,12 @@ export const TranslateButton = () => {
     setShowAuth(false);
     translate(0);
   };
+  let docs = [] as string[];
   const translate = async (i: number) => {
-    setShow(true);
     if (i === 0) {
-      setTarget("");
-      setTarget("");
+      docs = splitDocs(editor?.getOriginalEditor().getValue() || "");
     }
+    setShow(true);
     if (i >= docs.length) {
       setShow(false);
       return;
@@ -103,7 +102,9 @@ export const TranslateButton = () => {
     const doc = hideLink(docs[i]);
     const r = await complete(doc);
     if (r) {
-      setTarget((v) => v + backLink(r));
+      // setTarget((v) => v + backLink(r));
+      const old = editor?.getModifiedEditor().getValue();
+      editor?.getModifiedEditor().setValue(old + backLink(r));
       translate(i + 1);
     }
   };

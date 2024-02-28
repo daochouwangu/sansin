@@ -8,66 +8,22 @@ import {
 import { EditorBar } from "./EditorBar";
 import { useEffect, useRef, useState } from "react";
 import { useAtom } from "jotai";
-import { sourceAtom, targetAtom } from "../atoms/text";
+import { editorAtom } from "../atoms/text";
 
 export const Editor: React.FC = () => {
-  const [source, setSource] = useAtom(sourceAtom);
-  const [target, setTarget] = useAtom(targetAtom);
-  const sourceRef = useRef(source);
+  const [target, setTarget] = useState("");
+  const [_editor, setEditor] = useAtom(editorAtom);
   const targetRef = useRef(target);
   useEffect(() => {
-    sourceRef.current = source;
     targetRef.current = target;
-  }, [source, target]);
-  const diffEditorRef = useRef<MonacoDiffEditor | null>(null);
-  const monacoRef = useRef<Monaco | null>(null);
-  const _source = useThrottle(source, 200);
-  const _target = useThrottle(target, 200);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem("source", _source);
-      localStorage.setItem("target", _target);
-    }
-  }, [_source, _target, isMounted]);
-  const isClient = useIsClient();
-  useEffect(() => {
-    if (isClient) {
-      const s = localStorage.getItem("source");
-      if (s) {
-        setSource(s);
-      }
-      const t = localStorage.getItem("target");
-      if (t) {
-        setTarget(t);
-      }
-      setIsLoaded(true);
-    }
-  }, [isClient]);
+  }, [target]);
+
   const handleEditorDidMount = (editor: MonacoDiffEditor, monaco: Monaco) => {
-    diffEditorRef.current = editor;
-    setIsMounted(true);
-    diffEditorRef.current?.getOriginalEditor().setValue(sourceRef.current);
-    diffEditorRef.current?.getModifiedEditor().setValue(targetRef.current);
+    setEditor(editor);
     // here is another way to get monaco instance
     // you can also store it in `useRef` for further usage
-    editor.getModel()?.modified.onDidChangeContent((event) => {
-      const v = editor.getModifiedEditor().getValue();
-      setTarget(v);
-    });
-    editor
-      .getOriginalEditor()
-      .getModel()
-      ?.onDidChangeContent((event) => {
-        const v = editor.getOriginalEditor().getValue();
-        setSource(v);
-      });
   };
 
-  function showModifiedValue() {
-    alert(diffEditorRef.current?.getModifiedEditor().getValue());
-  }
   return (
     <div className="w-full">
       <EditorBar />
@@ -79,7 +35,7 @@ export const Editor: React.FC = () => {
           wordWrap: "on",
         }}
         onMount={handleEditorDidMount}
-        original={source}
+        original={""}
         modified={target}
       />
     </div>
