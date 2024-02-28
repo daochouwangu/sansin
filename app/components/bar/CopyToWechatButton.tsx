@@ -63,7 +63,7 @@ export const CopyToWechatButton = () => {
   };
 
   const copy = async (e: any) => {
-    const source = editor?.getOriginalEditor().getValue() || "";
+    const source = editor?.getModifiedEditor().getValue();
     if (!source) {
       alert("内容为空");
       return;
