@@ -39,7 +39,7 @@ export const CopyToWechatButton = () => {
     let isOver = false;
     for (let i = 0; i < ph.length; i++) {
       // 如果匹配到【版本发布】则后面的不再处理
-      if (ph[i].includes("版本发布")) {
+      if (ph[i].includes("**版本发布")) {
         res.push(ph[i]);
         isOver = true;
         continue;
