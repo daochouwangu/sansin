@@ -3,6 +3,21 @@ import { useAtom } from "jotai";
 import * as marked from "marked";
 import * as juice from "juice";
 import { editorAtom } from "@/app/atoms/text";
+import QRCode from "qrcode";
+
+// 创建一个缓存对象来存储已生成的二维码
+const qrcodeCache: { [key: string]: string } = {};
+
+// 提前生成二维码
+const generateQRCode = async (url: string): Promise<string> => {
+  if (qrcodeCache[url]) {
+    return qrcodeCache[url];
+  }
+  const base64 = await QRCode.toDataURL(url);
+  qrcodeCache[url] = base64;
+  return base64;
+};
+
 const qrcode: marked.TokenizerAndRendererExtension = {
   name: "qrcode",
   level: "inline",
@@ -21,16 +36,20 @@ const qrcode: marked.TokenizerAndRendererExtension = {
     }
   },
   renderer(token) {
-    return `<section style="margin-top: 12px;padding: 16px 20px;max-width: 100%;box-sizing: border-box;white-space: normal;text-size-adjust: auto;color: rgb(63, 63, 63);font-family: Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, &quot;PingFang SC&quot;, Cambria, Cochin, Georgia, Times, &quot;Times New Roman&quot;, serif;letter-spacing: 0.476px;text-align: left;display: flex;align-items: center;background-color: rgb(246, 246, 246);box-shadow: rgb(199, 201, 204) 0px 0px 0px inset;border-radius: 6px;border-color: rgb(62, 62, 62);font-size: 12px;overflow: hidden;overflow-wrap: break-word !important;margin-bottom: 0px;"><section style="margin: 0 !important;padding-right: 12px;max-width: 100%;box-sizing: border-box;flex: 1 1 0%;display: flex;flex-direction: column;justify-content: space-between;overflow-wrap: break-word !important;"><strong style="font-weight: bold !important;font-size: 12px;max-width: 100%;box-sizing: border-box;color: rgb(114, 114, 114);line-height: 1.75em;overflow-wrap: break-word !important;">长按识别二维码查看原文</strong>&nbsp; &nbsp;<mpchecktext contenteditable="false" id="1709012664341_0.3706423394256646"></mpchecktext><p style="font-size: 12px;margin-bottom:0;max-width: 100%;box-sizing: border-box;min-height: 1em;line-height: 1.8;color: rgb(114, 114, 114);word-break: break-all;overflow-wrap: break-word !important;">${token.text}<mpchecktext contenteditable="false" id="1709012664342_0.7239154036614526"></mpchecktext></p></section><section style="display: flex;align-items: center;max-width: 90px;box-sizing: border-box;flex-shrink: 0;font-size: 0px;overflow-wrap: break-word !important;"><img class="rich_pages wxw-img" data-imgfileid="100043708" data-ratio="1" src="https://mmbiz.qpic.cn/sz_mmbiz_png/INNfEriciaG5cllXQsylhsyfPAiajUAX91wMz13XYXicRJ4NV7CctZW9ELMrEWJicP5Arlic3HHayp6nFZKjK45XDibmw/640?wx_fmt=png&amp;from=appmsg" data-type="png" data-w="400" style="margin-right: auto;margin-left: auto;box-sizing: border-box;vertical-align: middle;border-style: none;display: block;border-radius: 4px;overflow-wrap: break-word !important;visibility: visible !important;width: 90px !important;"></section></section>`;
+    // 使用缓存中的二维码
+    const base64 = qrcodeCache[token.text] || "";
+    return `<section style="margin-top: 12px;padding: 16px 20px;max-width: 100%;box-sizing: border-box;white-space: normal;text-size-adjust: auto;color: rgb(63, 63, 63);font-family: Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, &quot;PingFang SC&quot;, Cambria, Cochin, Georgia, Times, &quot;Times New Roman&quot;, serif;letter-spacing: 0.476px;text-align: left;display: flex;align-items: center;background-color: rgb(246, 246, 246);box-shadow: rgb(199, 201, 204) 0px 0px 0px inset;border-radius: 6px;border-color: rgb(62, 62, 62);font-size: 12px;overflow: hidden;overflow-wrap: break-word !important;margin-bottom: 0px;"><section style="margin: 0 !important;padding-right: 12px;max-width: 100%;box-sizing: border-box;flex: 1 1 0%;display: flex;flex-direction: column;justify-content: space-between;overflow-wrap: break-word !important;"><strong style="font-weight: bold !important;font-size: 12px;max-width: 100%;box-sizing: border-box;color: rgb(114, 114, 114);line-height: 1.75em;overflow-wrap: break-word !important;">长按识别二维码查看原文</strong>&nbsp; &nbsp;<mpchecktext contenteditable="false" id="1709012664341_0.3706423394256646"></mpchecktext><p style="font-size: 12px;margin-bottom:0;max-width: 100%;box-sizing: border-box;min-height: 1em;line-height: 1.8;color: rgb(114, 114, 114);word-break: break-all;overflow-wrap: break-word !important;">${token.text}<mpchecktext contenteditable="false" id="1709012664342_0.7239154036614526"></mpchecktext></p></section><section style="display: flex;align-items: center;max-width: 90px;box-sizing: border-box;flex-shrink: 0;font-size: 0px;overflow-wrap: break-word !important;"><img class="rich_pages wxw-img" src="${base64}" style="margin-right: auto;margin-left: auto;box-sizing: border-box;vertical-align: middle;border-style: none;display: block;border-radius: 4px;overflow-wrap: break-word !important;visibility: visible !important;width: 90px !important;"></section></section>`;
   },
 };
 
 marked.use({ extensions: [qrcode] });
+
 function getFirstLink(markdown: string) {
   const linkRegex = /\[(.*?)\]\((.*?)(?: ".*")?\)/;
   const match = linkRegex.exec(markdown);
   return match ? match[2] : null;
 }
+
 export const CopyToWechatButton = () => {
   const [editor] = useAtom(editorAtom);
   const addQrcode = (text: string) => {
@@ -38,17 +57,14 @@ export const CopyToWechatButton = () => {
     const res = [];
     let isOver = false;
     for (let i = 0; i < ph.length; i++) {
-      // 如果匹配到【版本发布】则后面的不再处理
       if (ph[i].includes("**版本发布")) {
         res.push(ph[i]);
         isOver = true;
         continue;
       }
-      // 找到第一个链接，然后匹配到这个链接并且在下面插入对应二维码
       const link = getFirstLink(ph[i]);
 
       if (link && !isOver) {
-        // 如果是图片 则略过
         if (link.match(/\.(jpeg|jpg|gif|png|svg|webp)/)) {
           res.push(ph[i]);
         } else {
@@ -68,8 +84,19 @@ export const CopyToWechatButton = () => {
       alert("内容为空");
       return;
     }
-    console.log(source);
-    // Define the custom renderer
+
+    // 在转换 markdown 之前，先生成所有需要的二维码
+    const sourceWithQrcode = addQrcode(source);
+    const qrcodeMatches = sourceWithQrcode.match(/\[\[qrcode:(.*?)\]\]/g) || [];
+    const urls = qrcodeMatches.map((match) => {
+      const rule = /\[\[qrcode:(.*?)\]\]/;
+      return rule.exec(match)?.[1] || "";
+    });
+
+    // 等待所有二维码生成完成
+    await Promise.all(urls.map((url) => generateQRCode(url)));
+
+    // 定义渲染器
     const renderer = new marked.Renderer();
 
     // Override the function that renders links
@@ -86,40 +113,23 @@ export const CopyToWechatButton = () => {
     };
     renderer.heading = function (text, level, raw) {
       if (level === 2) {
-        return `<span class="prefix" style="display: none"></span
-    ><span
-      class="content"
-      style="
-        margin-left: -10px;
-        display: inline-block;
-        width: auto;
-        height: 40px;
-        background-color: rgb(33, 33, 34);
-        border-bottom-right-radius: 100px;
-        color: rgb(255, 255, 255);
-        padding-right: 30px;
-        padding-left: 30px;
-        line-height: 40px;
-        font-size: 16px;
-      "
-      >${text}</span
-    ><span class="suffix"></span>`;
+        return `<span class="prefix" style="display: none"></span><span class="content" style="margin-left: -10px;display: inline-block;width: auto;height: 40px;background-color: rgb(33, 33, 34);border-bottom-right-radius: 100px;color: rgb(255, 255, 255);padding-right: 30px;padding-left: 30px;line-height: 40px;font-size: 16px;">${text}</span><span class="suffix"></span>`;
       } else {
         return `<h${level}>${text}</h${level}>`;
       }
     };
-    const sourceWithQrcode = addQrcode(source);
-    // Convert the markdown string to HTML
-    let _htmlStr = await marked.parse(sourceWithQrcode, { renderer });
+
+    // 转换 markdown
+    let _htmlStr = marked.parse(sourceWithQrcode, { renderer });
     _htmlStr = `<div id="nice">${_htmlStr}</div>`;
     const htmlStr = juice.inlineContent(_htmlStr, css);
     const html = new Blob([htmlStr], { type: "text/html" });
-    // Create a new ClipboardItem from the blob
+
     const item = new ClipboardItem({
       [html.type]: html,
       "text/plain": new Blob([htmlStr], { type: "text/plain" }),
     });
-    // Write the ClipboardItem to the clipboard
+
     try {
       await navigator.clipboard.write([item]);
       alert("已复制到剪贴板");
@@ -159,7 +169,7 @@ const css = `
   margin-top: -10px; /*解决开头空隙过大问题*/
 }
 
-/*段落*/
+/*段���*/
 #nice p {
   font-size: 16px;
   padding-top: 8px;
